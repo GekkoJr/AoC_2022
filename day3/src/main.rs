@@ -4,26 +4,26 @@ fn main() {
     println!("Dag day3, yay!");
 
     let mut total = 0;
+    let file = fs::read_to_string("input.txt");
+    let lines: Vec<String> = file.unwrap().split("\n").map(|s| s.to_string()).collect();
+    let lines: Vec<String> = lines;
 
-    for line in fs::read_to_string("input.txt").unwrap().lines() {
-        let char_vec: Vec<char> = line.chars().collect();
-        let half = char_vec.len() / 2;
-
-        let (compartment1, compartment2) = char_vec.split_at(half);
-
-        let mut already_found: Vec<char> = vec![];
-
-        for c in compartment1 {
-            if compartment2.contains(c) {
-                if !already_found.contains(c) {
-                    println!("{}", c);
-                    already_found.push(*c);
-                    let to_add = find_rarity(*c);
-                    total = total + to_add;
-                }
+    for num in 0..100 {
+        let num = num * 3;
+        let mut found: bool = false;
+        for c in lines[num].chars() {
+            if lines[num + 1].contains(c) && lines[num + 2].contains(c) && !found {
+                let to_add = find_rarity(c);
+                println!("{}", to_add);
+                found = true;
+                total += to_add;
             }
         }
+        println!("__________");
     }
+
+
+
    println!("{}", total)
 }
 
