@@ -11,7 +11,6 @@ fn main() {
         let char_list: Vec<char> = line.chars().collect();
         let mut new_char_list: Vec<char> = vec![];
 
-        let mut current_char = 0;
         let mut not_empty: bool = true;
         for c in char_list {
             if c.is_numeric() {
