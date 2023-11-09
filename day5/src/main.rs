@@ -35,12 +35,11 @@ fn main() {
 
     for line in fs::read_to_string("input.txt").unwrap().lines() {
         let chars: Vec<char> = line.chars().collect();
-        let mut move_amount  = 0;
+        let mut move_amount = 0;
         let mut move_from = 0;
         let mut move_to = 0;
 
 
-        let mut found = 0;
         if line.contains("move") {
             let line_to_mod = line;
             let mut found = 0;
@@ -53,24 +52,29 @@ fn main() {
                         move_from = x.parse().unwrap()
                     }
                     if found == 2 {
-                        move_to = x.parse().unwrap()
+                        move_to = x.parse().unwrap();
                     }
                     found += 1;
                 }
             }
+            let mut tmp_vec = vec![];
+            for _ in 0..move_amount {
+                let length = creates[move_from - 1].len() - 1;
+                println!("{}", length);
+                let tmp_char: char = creates[move_from - 1][length ];
+                creates[move_from - 1].remove(length);
+                tmp_vec.insert(0, tmp_char);
+                // creates[move_to - 1].push(tmp_char);
+            }
+            creates[move_to -1].append(&mut tmp_vec);
+
         }
 
-        for _ in 0..move_amount {
-            let length = creates[move_from -1].len();
-            let tmp_char:char = creates[move_from - 1][length - 1];
-            creates[move_from -1].remove(length - 1);
-            creates[move_to - 1].push(tmp_char);
-        }
+
+
     }
 
     for letter in creates {
         println!("{}", letter[letter.len() - 1])
     }
-
-
 }
