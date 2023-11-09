@@ -42,16 +42,18 @@ fn main() {
 
         let mut found = 0;
         if line.contains("move") {
-            for c in chars {
-                if c.is_numeric() {
+            let line_to_mod = line;
+            let mut found = 0;
+            for x in line_to_mod.split_whitespace() {
+                if x.parse::<i32>().is_ok() {
                     if found == 0 {
-                        move_amount = c.to_string().parse().unwrap();
+                        move_amount = x.parse().unwrap();
                     }
                     if found == 1 {
-                        move_from = c.to_string().parse().unwrap();
+                        move_from = x.parse().unwrap()
                     }
                     if found == 2 {
-                        move_to = c.to_string().parse().unwrap();
+                        move_to = x.parse().unwrap()
                     }
                     found += 1;
                 }
@@ -59,10 +61,16 @@ fn main() {
         }
 
         for _ in 0..move_amount {
-            let length = creates[move_from].len();
-           // let tmp_char:char = new_creates[move_from][length];
-            println!("{}", length);
+            let length = creates[move_from -1].len();
+            let tmp_char:char = creates[move_from - 1][length - 1];
+            creates[move_from -1].remove(length - 1);
+            creates[move_to - 1].push(tmp_char);
         }
     }
+
+    for letter in creates {
+        println!("{}", letter[letter.len() - 1])
+    }
+
 
 }
