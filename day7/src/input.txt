@@ -1012,3 +1012,4 @@ $ cd ..
 $ cd qtgqnqh
 $ ls
 175846 pwcvj.bpm
+$ ss
