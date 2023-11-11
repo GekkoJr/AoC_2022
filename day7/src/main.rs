@@ -8,7 +8,7 @@ fn main() {
     let mut current_lines: Vec<&str> = vec![];
     // yes i hate this
 
-    let bind_line = fs::read_to_string("test.txt").unwrap();
+    let bind_line = fs::read_to_string("input.txt").unwrap();
     for line in bind_line.lines() {
         let word_list: Vec<&str> = line.split(" ").collect();
 
@@ -51,33 +51,33 @@ fn main() {
     }
 
     let mut totalt = 0;
-  //  for i in dir_list.keys() {
- //       println!("{}", i);
-        let size = size_finder(dir_list, "main/a/".to_string());
+    for i in dir_list.keys() {
+       println!("{}", i);
+        let size = size_finder(dir_list.clone(), i);
         println!("{size}");
         if size <= 100000 {
             totalt += size;
             println!("adding");
         }
         println!("------------------");
- //   }
+    }
     println!("{}", totalt);
 
 
 }
 
-fn size_finder(dir_list: HashMap<String, Vec<&str>>, path: String) -> i32 {
+fn size_finder(dir_list: HashMap<String, Vec<&str>>, path: &str) -> i32 {
     let mut dir_size = 0;
+    dbg!(&dir_list);
+    if let Some(lines) = dir_list.clone().get(path) {
 
-    if let Some(lines) = dir_list.get(&path) {
-        dbg!(dir_list.clone());
-        for i in dir_list.get(&path).unwrap() {
+        for i in dir_list.get(path).unwrap() {
             let line: Vec<&str> = i.split(" ").collect();
             if line[0] == "dir" {
                 let p2 = line[1].to_string();
-                let new_path = format!("{}{}", path, p2);
+                let new_path = format!("{}{}/", path, p2);
                 println!("new path: {new_path}");
-                let to_add = size_finder(dir_list.clone(), new_path);
+                let to_add = size_finder(dir_list.clone(), new_path.as_str());
                 println!("{to_add}");
                 dir_size += to_add
             } else {
