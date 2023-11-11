@@ -51,6 +51,18 @@ fn main() {
     }
 
     let mut totalt = 0;
+
+    // p 2 code
+    let total_used = size_finder(dir_list.clone(), "main/");
+
+    let unused = 70000000 - total_used;
+
+    let to_remove = 30000000 - unused;
+
+    // set this high so the programm that checks will always find smaller
+    let mut closesd_found = 70000000;
+    // end p2 spesific
+
     for i in dir_list.keys() {
        println!("{}", i);
         let size = size_finder(dir_list.clone(), i);
@@ -60,8 +72,18 @@ fn main() {
             println!("adding");
         }
         println!("------------------");
+
+        // p2 logic
+        if (size >= to_remove) && (size < closesd_found) {
+            closesd_found = size;
+        }
+
+        // end p2 logic
     }
-    println!("{}", totalt);
+    println!("p1 answer {}", totalt);
+    println!("unused size {unused}");
+    println!("to remove {to_remove}");
+    println!("smallest possible deletion (p2 answer) {closesd_found}")
 
 
 }
