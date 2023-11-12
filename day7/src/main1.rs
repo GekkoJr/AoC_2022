@@ -4,7 +4,7 @@ fn main() {
     let mut dir_and_file: Vec<Vec<&str>> = vec![];
     let mut current_dir: Vec<&str> = vec![];
 
-    let binding = fs::read_to_string("input.txt").unwrap();
+    let binding = fs::read_to_string("input.txt.txt").unwrap();
     for line in binding.lines() {
         if line.contains('$') {
             let command: Vec<&str> = line.split(" ").collect();

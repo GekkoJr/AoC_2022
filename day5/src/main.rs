@@ -7,7 +7,7 @@ fn main() {
         creates.push(vec![]);
     }
 
-    'wrapper: for line in fs::read_to_string("input.txt").unwrap().lines() {
+    'wrapper: for line in fs::read_to_string("input.txt.txt").unwrap().lines() {
         let char_list: Vec<char> = line.chars().collect();
         let mut new_char_list: Vec<char> = vec![];
 
@@ -33,7 +33,7 @@ fn main() {
         }
     }
 
-    for line in fs::read_to_string("input.txt").unwrap().lines() {
+    for line in fs::read_to_string("input.txt.txt").unwrap().lines() {
         let chars: Vec<char> = line.chars().collect();
         let mut move_amount = 0;
         let mut move_from = 0;

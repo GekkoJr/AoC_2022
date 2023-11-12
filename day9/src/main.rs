@@ -16,11 +16,10 @@ fn main() {
             Box::<MyApp>::default()
         }),
     );
-        
+
 
     struct MyApp {
         dots: Vec<(f32, f32)>,
-        green_dots: Vec<bool>,
         speed: i32,
         line: usize,
         running: bool,
@@ -30,19 +29,18 @@ fn main() {
         part: i32,
         total_lines: usize,
         total: i32,
+        center_pos: (f32, f32),
+        additional_dots: Vec<(f32, f32)>,
     }
     impl Default for MyApp {
-        fn default() ->Self {
-
-            let all_lines  = fs::read_to_string("test.txt").unwrap();
+        fn default() -> Self {
+            let all_lines = fs::read_to_string("input.txt").unwrap();
             let mut dots = Vec::new();
-            let mut green_dots = Vec::new();
-            let grid_size = 50;
+            let grid_size = 80;
 
             for x in 0..=grid_size {
                 for y in 0..=grid_size {
                     dots.push((x as f32, y as f32));
-                    green_dots.push(false);
                 }
             }
 
@@ -51,36 +49,36 @@ fn main() {
                 total += 1;
             }
             let total_lines = total;
-
-            green_dots[find_pos(grid_size / 2, grid_size / 2)] = true;
-
+            let center = ((grid_size / 2) as f32, (grid_size / 2) as f32);
+            let mut additional_dots: Vec<(f32, f32)> = vec![];
+            additional_dots.push(center);
             Self {
                 dots,
-                green_dots,
                 speed: 100,
                 line: 0,
                 part: 0,
                 running: false,
                 all_lines,
-                head: (25.0, 25.0),
-                tail: (25.0, 25.0),
+                head: center,
+                tail: center,
                 total_lines,
-                total : 0,
+                total: 0,
+                center_pos: center,
+                additional_dots,
             }
         }
     }
 
-
     impl eframe::App for MyApp {
         fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
             egui::SidePanel::left("side_panel").show(ctx, |ui| {
-               ui.heading("Options")    ;
+                ui.heading("Options");
                 ui.add(egui::Slider::new(&mut self.speed, 0..=100).text("Delay"));
 
                 if ui.button("Run this shit").clicked() && (self.running == false) {
                     self.running = true;
-                    self.head = (25.0, 25.0);
-                    self.tail = (25.0, 25.0);
+                    self.head = self.center_pos;
+                    self.tail = self.center_pos;
                     self.total = 0;
                 }
                 if self.running {
@@ -90,9 +88,10 @@ fn main() {
                 ui.label(format!("Total {}", self.total))
             });
             egui::CentralPanel::default().show(ctx, |ui| {
-                for((i, (x, y))) in self.dots.iter().enumerate() {
-                    let pos =  Pos2::new((*x * 10.0) + 250.0, (*y * 10.0) + 10.0);
-                    let color = if self.green_dots[i] {
+                for ((i, (x, y))) in self.dots.iter().enumerate() {
+                    let pos = Pos2::new((*x * 10.0) + 250.0, (*y * 10.0) + 10.0);
+                    let dot: (f32, f32) = (*x, *y);
+                    let color = if self.additional_dots.contains(&dot) {
                         Color32::GREEN
                     } else {
                         Color32::GRAY
@@ -100,25 +99,32 @@ fn main() {
 
                     ui.painter().circle_filled(pos, 2.0, color)
                 }
-                // painting head
-                let (hx, hy) = self.head;
-                let head_pos: Pos2 = Pos2::new((hx * 10.0) + 250.0, (hy * 10.0) + 10.0);
-                ui.painter().circle(head_pos, 3.0, Color32::TRANSPARENT, Stroke::new(1.0, Color32::RED ));
+                let (e, f) = self.center_pos;
+                let size = (e as i32) * 2;
+                let condition_h = (self.head.0 as i32 <= size) && (self.head.0 as i32 >= 0) && (self.head.1 as i32 <= size) && (self.head.1 as i32 >= 0);
+                let condition_t = (self.tail.0 as i32 <= size) && (self.tail.0 as i32 >= 0) && (self.tail.1 as i32 <= size) && (self.tail.1 as i32 >= 0);
 
-                // painting tail
-                let (tx, ty) = self.tail;
-                let tail_pos: Pos2 = Pos2::new((tx * 10.0) + 250.0, (ty * 10.0) + 10.0);
-                ui.painter().circle(tail_pos, 3.0, Color32::TRANSPARENT, Stroke::new(0.5, Color32::YELLOW));
+                if condition_h && condition_t {
+                    // painting head
+                    let (hx, hy) = self.head;
+                    let head_pos: Pos2 = Pos2::new((hx * 10.0) + 250.0, (hy * 10.0) + 10.0);
+                    ui.painter().circle(head_pos, 3.0, Color32::TRANSPARENT, Stroke::new(1.0, Color32::RED));
 
-                // painting arrow
-                ui.painter().arrow(
-                    tail_pos,
-                    head_pos - tail_pos,
-                    Stroke::new(1.0, Color32::YELLOW)
-                );
+                    // painting tail
+                    let (tx, ty) = self.tail;
+                    let tail_pos: Pos2 = Pos2::new((tx * 10.0) + 250.0, (ty * 10.0) + 10.0);
+                    ui.painter().circle(tail_pos, 3.0, Color32::TRANSPARENT, Stroke::new(0.5, Color32::YELLOW));
+
+                    // painting arrow
+                    ui.painter().arrow(
+                        tail_pos,
+                        head_pos - tail_pos,
+                        Stroke::new(1.0, Color32::YELLOW),
+                    );
+                }
+
 
                 if self.running {
-
                     let line: Vec<&str> = self.all_lines.lines().collect::<Vec<&str>>()[self.line].split(" ").collect();
                     let direction = line[0];
                     let steps = line[1];
@@ -126,8 +132,7 @@ fn main() {
                     // do 1 instruction
                     if self.part < steps.parse::<i32>().unwrap() {
                         // moving head
-                        let (mut hx ,mut hy) = self.head;
-                        println!("{hx}-{hy}");
+                        let (mut hx, mut hy) = self.head;
                         match direction {
                             "D" => hy -= 1.0,
                             "U" => hy += 1.0,
@@ -137,13 +142,12 @@ fn main() {
                         };
                         self.head = (hx, hy);
                         println!("Head moved to {hx}-{hy} Steps {steps} Part of {}", self.part);
-                        self.part +=1;
+                        self.part += 1;
 
                         // move tail
                         let (mut tx, mut ty) = self.tail;
                         let x_diff = hx - tx;
                         let y_diff = hy - ty;
-                        println!("Diff is x {x_diff}");
 
                         // makes sure it only moves one field
 
@@ -178,11 +182,11 @@ fn main() {
                             ty -= 1.0;
                             moved == true;
                         }
-
-
                         self.tail = (tx, ty);
-                        self.green_dots[find_pos(tx as i32, ty as i32)] = true;
 
+                        if !self.additional_dots.contains(&self.tail) {
+                            self.additional_dots.push(self.tail);
+                        }
                     } else {
                         self.part = 0;
                         self.line += 1;
@@ -193,27 +197,24 @@ fn main() {
                         self.line = 0;
                         Context::request_repaint(&ctx);
 
-                        for i in self.green_dots.clone() {
-                            if i == true {
-                                self.total += 1;
-                            }
-                        }
 
+                        for _i in self.additional_dots.clone() {
+                            self.total += 1;
+                        }
                     }
 
                     sleep(time::Duration::from_millis((self.speed * 10) as u64));
                     Context::request_repaint(&ctx);
                 }
-
-
             });
         }
     }
 }
 
-fn find_pos(x: i32, y: i32) -> usize {
+fn find_pos(x: i32, y: i32, grid_size: (f32, f32)) -> usize {
     let mut result: i32 = 0;
-    result = y + (51 * x);
+    let (x1, _y1) = grid_size;
+    result = y + (((x1 * 2.0) + 1.0) as i32 * x);
 
     return result.to_string().parse::<usize>().unwrap();
 }

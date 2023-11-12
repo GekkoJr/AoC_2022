@@ -1,7 +1,7 @@
 use std::fs;
 
 fn main() {
-    let file = "input.txt";
+    let file = "input.txt.txt";
     let data = parse(file);
 
     let result = find_visible(data.clone());

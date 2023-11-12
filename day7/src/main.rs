@@ -8,7 +8,7 @@ fn main() {
     let mut current_lines: Vec<&str> = vec![];
     // yes i hate this
 
-    let bind_line = fs::read_to_string("input.txt").unwrap();
+    let bind_line = fs::read_to_string("input.txt.txt").unwrap();
     for line in bind_line.lines() {
         let word_list: Vec<&str> = line.split(" ").collect();
 

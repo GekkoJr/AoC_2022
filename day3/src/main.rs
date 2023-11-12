@@ -4,7 +4,7 @@ fn main() {
     println!("Dag day3, yay!");
 
     let mut total = 0;
-    let file = fs::read_to_string("input.txt");
+    let file = fs::read_to_string("input.txt.txt");
     let lines: Vec<String> = file.unwrap().split("\n").map(|s| s.to_string()).collect();
     let lines: Vec<String> = lines;
 

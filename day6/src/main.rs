@@ -1,7 +1,7 @@
 use std::fs;
 
 fn main() {
-    let line = fs::read_to_string("input.txt").unwrap();
+    let line = fs::read_to_string("input.txt.txt").unwrap();
 
     let mut current_chars: Vec<char> = vec![];
     let mut num = 0;

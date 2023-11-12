@@ -3,7 +3,7 @@ use std::fs;
 fn main() {
     let mut total: i32 = 0;
 
-    for line in fs::read_to_string("input.txt").unwrap().lines() {
+    for line in fs::read_to_string("input.txt.txt").unwrap().lines() {
         let elves: Vec<&str> = line.split(',').collect();
         let elf_a: Vec<&str> = elves[0].split("-").collect();
         let elf_b: Vec<&str> = elves[1].split("-").collect();
