@@ -25,16 +25,17 @@ fn main() {
         running: bool,
         all_lines: String,
         head: (f32, f32),
-        tail: (f32, f32),
+        tail: Vec<(f32, f32)>,
         part: i32,
         total_lines: usize,
         total: i32,
         center_pos: (f32, f32),
         additional_dots: Vec<(f32, f32)>,
+        tail_len: i32,
     }
     impl Default for MyApp {
         fn default() -> Self {
-            let all_lines = fs::read_to_string("input.txt").unwrap();
+            let all_lines = fs::read_to_string("test.txt").unwrap();
             let mut dots = Vec::new();
             let grid_size = 80;
 
@@ -52,6 +53,7 @@ fn main() {
             let center = ((grid_size / 2) as f32, (grid_size / 2) as f32);
             let mut additional_dots: Vec<(f32, f32)> = vec![];
             additional_dots.push(center);
+
             Self {
                 dots,
                 speed: 100,
@@ -60,11 +62,12 @@ fn main() {
                 running: false,
                 all_lines,
                 head: center,
-                tail: center,
+                tail: vec![((center.0 * 10.0) + 250.0, (center.1 * 10.0) + 10.0)],
                 total_lines,
                 total: 0,
                 center_pos: center,
                 additional_dots,
+                tail_len: 1,
             }
         }
     }
@@ -74,11 +77,20 @@ fn main() {
             egui::SidePanel::left("side_panel").show(ctx, |ui| {
                 ui.heading("Options");
                 ui.add(egui::Slider::new(&mut self.speed, 0..=100).text("Delay"));
+                if !self.running {
+                    ui.add(egui::Slider::new(&mut self.tail_len, 1..=10).text("Tail Lenght"));
+                };
 
                 if ui.button("Run this shit").clicked() && (self.running == false) {
                     self.running = true;
                     self.head = self.center_pos;
-                    self.tail = self.center_pos;
+                    self.tail.clear();
+                    self.additional_dots.clear();
+
+                    for _i in 0..self.tail_len {
+                        self.tail.push(self.center_pos);
+                    }
+
                     self.total = 0;
                 }
                 if self.running {
@@ -102,7 +114,7 @@ fn main() {
                 let (e, f) = self.center_pos;
                 let size = (e as i32) * 2;
                 let condition_h = (self.head.0 as i32 <= size) && (self.head.0 as i32 >= 0) && (self.head.1 as i32 <= size) && (self.head.1 as i32 >= 0);
-                let condition_t = (self.tail.0 as i32 <= size) && (self.tail.0 as i32 >= 0) && (self.tail.1 as i32 <= size) && (self.tail.1 as i32 >= 0);
+                let condition_t = (self.tail[(self.tail.len() -1) as usize].0 as i32 <= size) && (self.tail[(self.tail.len() -1) as usize].0 as i32 >= 0) && (self.tail[(self.tail.len() - 1) as usize].1 as i32 <= size) && (self.tail[(self.tail.len() - 1) as usize].1 as i32 >= 0);
 
                 if condition_h && condition_t {
                     // painting head
@@ -111,16 +123,19 @@ fn main() {
                     ui.painter().circle(head_pos, 3.0, Color32::TRANSPARENT, Stroke::new(1.0, Color32::RED));
 
                     // painting tail
-                    let (tx, ty) = self.tail;
-                    let tail_pos: Pos2 = Pos2::new((tx * 10.0) + 250.0, (ty * 10.0) + 10.0);
-                    ui.painter().circle(tail_pos, 3.0, Color32::TRANSPARENT, Stroke::new(0.5, Color32::YELLOW));
-
-                    // painting arrow
-                    ui.painter().arrow(
-                        tail_pos,
-                        head_pos - tail_pos,
-                        Stroke::new(1.0, Color32::YELLOW),
-                    );
+                    let mut last: Pos2 = Pos2::new((hx * 10.0) + 250.0, (hy * 10.0) + 10.0);
+                    for i in self.tail.clone() {
+                        let (tx, ty) = i;
+                        let tail_pos: Pos2 = Pos2::new((tx * 10.0) + 250.0, (ty * 10.0) + 10.0);
+                        ui.painter().circle(tail_pos, 3.0, Color32::TRANSPARENT, Stroke::new(0.5, Color32::YELLOW));
+                        // painting arrow
+                        ui.painter().arrow(
+                            tail_pos,
+                            last - tail_pos,
+                            Stroke::new(1.0, Color32::YELLOW),
+                        );
+                        last = tail_pos;
+                    }
                 }
 
 
@@ -134,8 +149,8 @@ fn main() {
                         // moving head
                         let (mut hx, mut hy) = self.head;
                         match direction {
-                            "D" => hy -= 1.0,
-                            "U" => hy += 1.0,
+                            "D" => hy += 1.0,
+                            "U" => hy -= 1.0,
                             "L" => hx -= 1.0,
                             "R" => hx += 1.0,
                             _ => panic!("Invild instruct")
@@ -144,48 +159,86 @@ fn main() {
                         println!("Head moved to {hx}-{hy} Steps {steps} Part of {}", self.part);
                         self.part += 1;
 
-                        // move tail
-                        let (mut tx, mut ty) = self.tail;
-                        let x_diff = hx - tx;
-                        let y_diff = hy - ty;
+                        let mut last_part = self.head;
+                        let mut index = 0;
+                        for i in self.tail.clone() {
+                            // move tail
+                            let (mut tx, mut ty) = i;
+                            let mut x_diff = 0.0;
+                            let mut y_diff = 0.0;
 
-                        // makes sure it only moves one field
+                            x_diff = last_part.0 - tx;
+                            y_diff = last_part.1 - ty;
+                            println!("x: {x_diff} y: {x_diff}");
 
+                            // makes sure it only moves one field
+                            let mut moved = false;
 
-                        let mut moved = false;
-                        if (x_diff == 2.0) && !moved {
-                            if y_diff != 0.0 {
-                                ty += y_diff;
+                            //longfuck cases
+                            if(y_diff == -2.0) && (x_diff == 2.0) {
+                                tx += 1.0;
+                                ty -= 1.0;
+                                moved = true;
                             }
-                            tx += 1.0;
-                            moved == true;
-                        }
-                        if x_diff == -2.0 {
-                            if y_diff != 0.0 {
-                                ty += y_diff;
+                            if(y_diff == -2.0) && (x_diff == -2.0) {
+                                tx -= 1.0;
+                                ty -= 1.0;
+                                moved = true;
                             }
-                            tx -= 1.0;
-                            moved == true;
-                        }
-                        if (y_diff == 2.0) && !moved {
-                            if x_diff != 0.0 {
-                                tx += x_diff;
+                            if(y_diff == 2.0) && (x_diff == 2.0) {
+                                tx += 1.0;
+                                ty += 1.0;
+                                moved = true;
                             }
-                            ty += 1.0;
-                            moved == true;
-                        }
+                            if(y_diff == 2.0) && (x_diff == -2.0) {
+                                tx -= 1.0;
+                                ty += 1.0;
+                                moved = true;
+                            }
 
-                        if (y_diff == -2.0) && !moved {
-                            if x_diff != 0.0 {
-                                tx += x_diff;
-                            }
-                            ty -= 1.0;
-                            moved == true;
-                        }
-                        self.tail = (tx, ty);
+                            // "normal cases"
 
-                        if !self.additional_dots.contains(&self.tail) {
-                            self.additional_dots.push(self.tail);
+                            if (x_diff == 2.0) && !moved {
+                                if y_diff != 0.0 {
+                                    ty += y_diff;
+                                }
+                                tx += 1.0;
+                                moved == true;
+                            }
+                            if x_diff == -2.0 {
+                                if y_diff != 0.0 {
+                                    ty += y_diff;
+                                }
+                                tx -= 1.0;
+                                moved == true;
+                            }
+                            if (y_diff == 2.0) && !moved {
+                                if x_diff != 0.0 {
+                                    tx += x_diff;
+                                }
+                                ty += 1.0;
+                                moved == true;
+                            }
+
+                            if (y_diff == -2.0) && !moved {
+                                if x_diff != 0.0 {
+                                    tx += x_diff;
+                                }
+                                ty -= 1.0;
+                                moved == true;
+                            }
+
+                            self.tail[index] = (tx, ty);
+
+                            if self.tail_len -1 == index as i32 {
+                                if !self.additional_dots.contains(&i) {
+                                    println!("adding dot");
+                                    self.additional_dots.push(i);
+                                };
+
+                            }
+                            last_part = (tx, ty);
+                            index += 1;
                         }
                     } else {
                         self.part = 0;
@@ -195,7 +248,11 @@ fn main() {
                     if self.line == self.total_lines {
                         self.running = false;
                         self.line = 0;
-                        Context::request_repaint(&ctx);
+
+                        let last_point = self.tail[(self.tail_len - 1) as usize];
+                        if !self.additional_dots.contains(&last_point) {
+                            self.additional_dots.push(last_point);
+                        }
 
 
                         for _i in self.additional_dots.clone() {
@@ -209,12 +266,4 @@ fn main() {
             });
         }
     }
-}
-
-fn find_pos(x: i32, y: i32, grid_size: (f32, f32)) -> usize {
-    let mut result: i32 = 0;
-    let (x1, _y1) = grid_size;
-    result = y + (((x1 * 2.0) + 1.0) as i32 * x);
-
-    return result.to_string().parse::<usize>().unwrap();
 }
