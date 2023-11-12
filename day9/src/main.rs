@@ -35,7 +35,7 @@ fn main() {
     }
     impl Default for MyApp {
         fn default() -> Self {
-            let all_lines = fs::read_to_string("test.txt").unwrap();
+            let all_lines = fs::read_to_string("input.txt").unwrap();
             let mut dots = Vec::new();
             let grid_size = 80;
 
@@ -205,7 +205,7 @@ fn main() {
                                 tx += 1.0;
                                 moved == true;
                             }
-                            if x_diff == -2.0 {
+                            if (x_diff == -2.0) && !moved {
                                 if y_diff != 0.0 {
                                     ty += y_diff;
                                 }
